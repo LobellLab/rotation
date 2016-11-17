@@ -3,7 +3,6 @@ library('plyr')
 <<<<<<< HEAD
 library('dplyr')
 =======
->>>>>>> 6c5b412fa2bbae955cfe2b796ddb93a3271ddc03
 
 # Set up data
 corn_before_corn = read.csv("corn_before_corn.csv")
