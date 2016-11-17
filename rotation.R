@@ -1,6 +1,9 @@
 library('ggplot2')
 library('plyr')
+<<<<<<< HEAD
 library('dplyr')
+=======
+>>>>>>> 6c5b412fa2bbae955cfe2b796ddb93a3271ddc03
 
 # Set up data
 corn_before_corn = read.csv("corn_before_corn.csv")
@@ -61,8 +64,8 @@ color = "Rotation"
 par(mfrow=c(2,2))
 source("ygap.trendmaps.R")
 cnames=paste(ctab$NAME,ctab$STATE_NAME,sep=', ')
-CRD = read.csv("FIPS_CRD.csv")
 
+CRD = read.csv("FIPS_CRD.csv")
 # Difference between rotations/not rotations
 corn <- cbind(corn = corn_before_corn, soy = soy_before_corn)
 corn_with_diff <- mutate(corn, diff = corn$soy.mean - corn$corn.mean)
@@ -80,10 +83,15 @@ names(soy_means_allyears) = c("FIPS", "mean")
 # Means for each instance of each year/same info as corn_with_diff, just better organized
 corn_means_eachyear = ddply(corn_with_diff, c("corn.year", "corn.FIPS.formula", "corn.count"), summarise, mean = mean(diff))
 names(corn_means_eachyear) = c("year", "FIPS", "count", "mean")
+
 corn_means_eachyear = full_join(corn_means_eachyear, CRD, by = "FIPS")
 soy_means_eachyear = ddply(soy_with_diff, c("soy.year", "soy.FIPS.formula", "soy.count"), summarise, mean = mean(diff))
 names(soy_means_eachyear) = c("year", "FIPS", "count", "mean")
 soy_means_eachyear = full_join(soy_means_eachyear, CRD, by = "FIPS")
+
+soy_means_eachyear = ddply(soy_with_diff, c("soy.year", "soy.FIPS.formula", "soy.count"), summarise, mean = mean(diff))
+names(soy_means_eachyear) = c("year", "FIPS", "count", "mean")
+
 
 # All the years together
 par(mfrow=c(1,2))
@@ -154,6 +162,7 @@ saveGIF({
   for (year in unique(na.omit(corn_means_eachyear$year))) {
     map.var(data.frame(fips = corn_means_eachyear$FIPS[corn_means_eachyear$year==year], my = corn_means_eachyear$mean[corn_means_eachyear$year==year]), titl = paste0("Corn Rotation\n Diff", year), legend=TRUE, leg_size = 0.85, xleg =-97, yleg = 40)
   }
+
 }, interval = 2, ani.width=600, ani.height=800, loop=TRUE, movie.name = "corn_yields.gif", outdir = getwd())
 
 # Corn yields CRD
@@ -165,24 +174,33 @@ saveGIF({
   }
 }, interval = 2, ani.width=600, ani.height=800, loop=TRUE, movie.name = "corn_yields.gif", outdir = getwd())
 
+
+}, interval = 2, ani.width=600, ani.height=800, loop=TRUE, outdir = getwd())
+
 # Corn pixels
 saveGIF({
   for (year in unique(na.omit(corn_means_eachyear$year))) {
     map.var(data.frame(fips = corn_means_eachyear$FIPS[corn_means_eachyear$year==year], my = corn_means_eachyear$count[corn_means_eachyear$year==year]/1000), titl = paste0("Corn\n Pixels/1000 \n", year), legend=TRUE, leg_size = 0.85, xleg =-97, yleg = 40)
   }
 }, interval = 2, ani.width=600, ani.height=800, loop=TRUE,movie.name = "corn_pixels.gif", outdir = getwd())
+
+
+
 # Soy yields
 saveGIF({
   for (year in unique(na.omit(soy_means_eachyear$year))) {
     map.var(data.frame(fips = soy_means_eachyear$FIPS[soy_means_eachyear$year==year], my = soy_means_eachyear$mean[soy_means_eachyear$year==year]), titl = paste0("Soy Rotation\n Diff", year), legend=TRUE, leg_size = 0.85, xleg =-97, yleg = 40)
   }
 }, interval = 2, ani.width=600, ani.height=800, loop=TRUE, movie.name = "soy_yields.gif", outdir = getwd())
+
 # Soy pixels
 saveGIF({
   for (year in unique(na.omit(soy_means_eachyear$year))) {
     map.var(data.frame(fips = soy_means_eachyear$FIPS[soy_means_eachyear$year==year], my = soy_means_eachyear$count[soy_means_eachyear$year==year]/1000), titl = paste0("Soy\n Pixels/1000 \n", year), legend=TRUE, leg_size = 0.85, xleg =-97, yleg = 40)
   }
+
 }, interval = 2, ani.width=600, ani.height=800, loop=TRUE, movie.name = "soy_pixels.gif", outdir = getwd())
+
 
 #=============================================================
 
@@ -238,6 +256,7 @@ abline(lm(s_weather$mean~s_weather$t_max), col="green")
 }
 
 #=============================================================
+
 corn_before_corn_meters = read.csv("corn_before_corn_meters.csv")
 soy_before_corn_meters = read.csv("soy_before_corn_meters.csv")
 corn_before_soy_meters = read.csv("corn_before_soy_meters.csv")
@@ -252,6 +271,7 @@ soy <- cbind(corn = corn_before_soy, soy = soy_before_soy)
 soy_with_diff <- mutate(soy, diff = soy$corn.mean - soy$soy.mean)
 soy_means_eachyear = ddply(soy_with_diff, c("soy.year", "soy.FIPS.formula", "soy.count"), summarise, mean = mean(diff))
 names(soy_means_eachyear) = c("year", "FIPS", "count", "mean")
+
 # Find outliers in yields for corn and soy
 corn_outliers = data.frame(na.omit(corn_means_eachyear[corn_means_eachyear$mean > 300,])) 
 # @Chris, there's a bunch of NAs here and idk really where they come from; 
@@ -260,6 +280,7 @@ corn_outliers = data.frame(na.omit(corn_means_eachyear[corn_means_eachyear$mean 
 soy_outliers = data.frame(na.omit(soy_means_eachyear[soy_means_eachyear$mean > 100,])) 
 # write.csv(corn_outliers, "corn_outliers.csv") # Commented out cos I don't wanna do this every time
 # write.csv(soy_outliers, "soy_outliers.csv")
+
 
 #=============================================================
 # CRD-FIPS stuff
@@ -273,3 +294,12 @@ soy_outliers = data.frame(na.omit(soy_means_eachyear[soy_means_eachyear$mean > 1
 # Check yield samples against sample sizes + see if there's not enough data (?) # small samples for counties
 # do weather analyses overall (waiting on george)
 # panel.smooth --> one plot for all the years, color points by year
+
+#TODO 
+# Fix the animations not looping more than once
+# Find out why there are 0s for precipitation --> R and EE debugging
+# CRD maps/gifs (4)
+# Run full regression on all variables (tmax, prcp) and plot partials (5)
+# Regress on one variable and plot residuals against other variable
+# Check yield samples against sample sizes + see if there's not enough data
+
