@@ -9,6 +9,7 @@ library('reshape')
 library('jsonlite')
 source('county_comparison.R')
 source('ygap.trendmaps.R')
+
 source("minor_crops_setup.R")
 source("minor_crops_soy..R")
 
@@ -20,6 +21,7 @@ soy_aux = minor_setup_soy()
 
 # Make sure you're using the same subset of counties to compare the auxiliary crop with the rotated corn
 # Aux is a data frame of weighted mean yields of corn after rotation with one of six auxiliary crops
+
 find_significant_FIPS = function(aux, short_name_list, cutoff){
   all_crops = data.frame()
   for (name in short_name_list) {
@@ -30,12 +32,14 @@ find_significant_FIPS = function(aux, short_name_list, cutoff){
     all_years = data.frame()
     
     # For each year, use only matching FIPS
+
     for (y in c(unique(aux$year))) {
       aux_to_use = aux[aux[,count] > cutoff & aux$year == y,] # Enough pixels
       aux_df = data.frame(crop = name, yield = aux_to_use[,mean_name], count = aux_to_use[,count], year = y, FIPS = aux_to_use$FIPS)
       FIPS_to_use = aux_to_use$FIPS # Use those same FIPS to look at corn-corn and soy-corn
       wnccpi_to_use = wnccpi[wnccpi$year == y & wnccpi$FIPS.formula %in% FIPS_to_use,]
       if(nrow(wnccpi_to_use) > 0){
+
         if (grepl("nccpi", mean_name)) {
           m = substr(toString(name), nchar(name) - 5, nchar(name))
           cname = paste0("wyield_cc_", m,"_mean")
@@ -46,6 +50,7 @@ find_significant_FIPS = function(aux, short_name_list, cutoff){
         }
         c2u = data.frame(FIPS = wnccpi_to_use$FIPS.formula, year = wnccpi_to_use$year, yield = wnccpi_to_use[,cname], count = NA, crop = paste0("corn_vs_", name))
         s2u = data.frame(FIPS = wnccpi_to_use$FIPS.formula, year = wnccpi_to_use$year, yield = wnccpi_to_use[,sname], count = NA, crop = paste0("soy_vs_", name))
+
         all_years = rbind(all_years, aux_df, c2u, s2u)
       }
     }
@@ -53,6 +58,7 @@ find_significant_FIPS = function(aux, short_name_list, cutoff){
   }
   return(all_crops)
 }
+
 
 # alfalfa - corn after alfalfa
 # corn_vs_alfalfa - corn after corn (same fips as alfalfa)
@@ -74,6 +80,7 @@ soy_after_aux = find_significant_FIPS(soy_aux, c("alfalfa", "dbl", "winwheat", "
                                                  "winwheat_nccpi1", "winwheat_nccpi3", "winwheat_nccpi4", "winwheat_nccpi5",
                                                  "oats_nccpi1", "oats_nccpi2", "oats_nccpi3", "oats_nccpi4", "oats_nccpi5"),500/0.2)
 
+
 # @ Chris, I'd also like to be able to efficiently get the differences between for example alfalfa and corn_vs_alfalfa (aka corn yield after alfalfa
 # and corn yield after corn). ddply and aggregate don't seem to do what I want? Do I actually need these or do you think the existing graphs are fine?
 
@@ -93,6 +100,7 @@ boxplots = function(corn_after_aux, crop_list, graph_list){
 boxplots(corn_after_aux, c("alfalfa", "dbl", "winwheat", "oats"), c("Alfalfa", "Double Cropped Winter \nWheat & Soy",
                                                                     "Winter Wheat", "Oats"))
 
+
 par(mfrow=c(1,1))
 boxplot(corn_after_aux$yield[corn_after_aux$crop == "alfalfa"], corn_after_aux$yield[corn_after_aux$crop == "dbl"],
         corn_after_aux$yield[corn_after_aux$crop == "winwheat"], corn_after_aux$yield[corn_after_aux$crop == "oats"],
@@ -110,6 +118,7 @@ par(mfrow=c(1,3))
 map.var(data.frame(fips = average_corn$FIPS[average_corn$crop=="dbl"], my = average_corn$meanyield[average_corn$crop=="dbl"]), titl = paste0("Avg Yield of Corn Rotated after Dbl \nin Acres Across Years"), legend=TRUE, leg_size = 0.7, xleg =-97, yleg = 40)
 map.var(data.frame(fips = average_corn$FIPS[average_corn$crop=="corn_vs_dbl"], my = average_corn$meanyield[average_corn$crop=="corn_vs_dbl"]), titl = paste0("Avg Yield of Corn Rotated after Corn \nin Acres Across Years"), legend=TRUE, leg_size = 0.7, xleg =-97, yleg = 40)
 map.var(data.frame(fips = average_corn$FIPS[average_corn$crop=="soy_vs_dbl"], my = average_corn$meanyield[average_corn$crop=="soy_vs_dbl"]), titl = paste0("Avg Yield of Corn Rotated after Soy \nin Acres Across Years"), legend=TRUE, leg_size = 0.7, xleg =-97, yleg = 40)
+
 
 # For each nccpi and each crop
 # Alfalfa: nccpi1 doesnt exist
@@ -256,3 +265,4 @@ par(mfrow=c(1,3))
 nccpi_hist(corn_after_aux, 'oats', 'Oats', 3, 5, 1000, 2100, 0, 5, 1200, 4)
 nccpi_hist(corn_after_aux, 'oats', 'Oats', 4, 5, 1000, 2100, 0, 5, 1000, 4)
 nccpi_hist(corn_after_aux, 'oats', 'Oats', 5, 5, 1000, 2100, 0, 5, 1200, 4)
+
