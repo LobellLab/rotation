@@ -30,6 +30,7 @@ nccpi_boxplot = function(nccpi, pbenefit, area_name) {
     #boxplot(pbenefit~nccpi,outline=F,data = soy_nccpi, main = "Soy", add = T, xlab = "Soil NCCPI", col = rainbow(10))
     #mtext("Weighted % \n Rotation Benefit",side=2,las=1,line=2.2)
     #par(mar=c(0,0,0,0))
+    
   } else {
     par(mfrow=c(2,1))
     boxplot(rot~nccpi, data = corn_nccpi, ylab = "Weighted Rotation Yield", main = "Corn", xlab = "Soil NCCPI", col=rainbow(10))

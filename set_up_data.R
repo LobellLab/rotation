@@ -74,12 +74,12 @@ set_up = function(percentile, outlier_val){
   return(wnccpi)
 }
 
+
 outlierReplace = function(dataframe, cols, rows, newValue = NA) {
   if (any(rows)) {
     set(dataframe, rows, cols, newValue)
   }
 }
-
 # If percentile is TRUE, then go by smallest percentile given by value. If FALSE, go by
 # number of acres given by value (0.2 acres = 1 pixel).
 remove_outliers = function(nccpi, percentile, value) {
@@ -88,6 +88,7 @@ remove_outliers = function(nccpi, percentile, value) {
   } else {
     pixels = value/0.2
   }
+
   
   factors = c("yield_cc_count", "yield_sc_count", "yield_cc_count", "yield_ss_count",
               "yield_cc_nccpi1_count", "yield_cc_nccpi2_count", "yield_cc_nccpi3_count", "yield_cc_nccpi4_count", "yield_cc_nccpi5_count",
@@ -178,6 +179,7 @@ get_cnccpi = function(wnccpi) {
               ) 
   return(cnccpi)
 }
+
 
 
 

@@ -1,4 +1,5 @@
 # Clean up and merge weather data
+
 weather_data = function(wnccpi, FIPS) {
   if(FIPS){
     df_weather = data.frame(FIPS = wnccpi$FIPS.formula, CRD = wnccpi$CRD, year = wnccpi$year,
@@ -18,6 +19,7 @@ weather_data = function(wnccpi, FIPS) {
                                    corn_vpd = (wnccpi$vp_cc_mean + wnccpi$vp_sc_mean)/2.0, soy_vpd = (wnccpi$vp_ss_mean + wnccpi$vp_cs_mean)/2.0
   )
   }
+
   return(df_weather)
 }
 
@@ -32,6 +34,7 @@ weather_scatter_per_year = function(df, crop_name, weather_name, val_name) {
     abline(lm(df[,value_name]~df[,factor_name]), col="green")
   }
 }
+
 
 
 grid_arrange_shared_legend <- function(..., ncol = length(list(...)), nrow = 1, position = c("bottom", "right")) {
@@ -85,6 +88,7 @@ weather_scatter = function(df, cropname) {
   grid_arrange_shared_legend(v, p, t, tm, ncol = 2, nrow = 2)
 
   #multiplot(v, p, t, tm, cols = 2)
+
 }
 
 

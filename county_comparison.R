@@ -107,7 +107,6 @@ avg_pbenefit_by_county = function(wnccpi, FIPS) {
 }
 
 
-
 yield_anomaly = function(df, df_by_county, FIPS) {
   if(FIPS) {
     anomaly = join(df_by_county, df, by = "FIPS.formula")
@@ -137,6 +136,7 @@ yield_anomaly = function(df, df_by_county, FIPS) {
   lines(lowess(chris_soy$yield.anomaly, chris_soy$percent.effect*100), col = "green", lwd=3)
   title("Mean Percent Rotation Benefit \n Versus Yield Anomaly", outer=T, adj=0.6)
 }
+
 
 
 
