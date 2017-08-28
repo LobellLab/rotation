@@ -1,8 +1,17 @@
-regression_barplot = function(cnccpi) {
+regression_barplot = function(disagg) {
   
-  regr = regression_df(cnccpi)
-  cregr = regr[substr(regr$name, 1, 15) == "soy_before_corn" | substr(regr$name, 1, 16) == "corn_before_corn",]
-  sregr = regr[substr(regr$name, 1, 14) == "soy_before_soy" | substr(regr$name, 1, 15) == "corn_before_soy",]
+  cc = disagg[disagg$rotation == "corn-corn",] 
+  sc = disagg[disagg$rotation == "soy-corn",]
+  ss = disagg[disagg$rotation == "soy-soy",]
+  cs = disagg[disagg$rotation == "corn-soy",]
+  cc$yearagocrop = "C"
+  cs$yearagocrop = "C"
+  sc$yearagocrop = "S"
+  ss$yearagocrop = "S"
+  
+  cregr = rbind(cc, sc)
+  sregr  = rbind(ss, cs)
+  
   
   # Left panel
   cp <- cregr %>%
@@ -38,12 +47,17 @@ regression_barplot = function(cnccpi) {
   
   cregr$stateyear = paste0(substr(cregr$CRD, 1, 2), cregr$year)
   sregr$stateyear = paste0(substr(sregr$CRD, 1, 2), sregr$year)
-  cregr = cregr[complete.cases(cregr),] %>% group_by(stateyear) %>% filter(var(outcome_yield) <= 50000)
-  cregr = cregr[complete.cases(cregr),] %>% group_by(stateyear) %>% filter(n() >= 85)
-  sregr = sregr[complete.cases(sregr),] %>% group_by(stateyear) %>% filter(n() >= 80)
+  
+  # Fiddle here to appease bootcov
+  ddply(cregr, .(stateyear), summarise, mean = mean(outcome_yield), var = var(outcome_yield), num = n())
+  cregr = cregr[cregr$outcome_yield < 6000,]
+  cregr = cregr[complete.cases(cregr),] %>% group_by(stateyear) %>% filter(var(outcome_yield) <= 90000)
+  cregr = cregr[complete.cases(cregr),] %>% group_by(stateyear) %>% filter(n() >= 900) 
   clm = lm(formula = outcome_yield ~ yearagocrop + vpd + prcp + tmax + tmin + nccpi, data = cregr[complete.cases(cregr),], x=T, y=T)
+  ctest <- bootcov(clm, cregr$stateyear[complete.cases(cregr)], B=1000,fitter = ols)
+  
+  sregr = sregr[complete.cases(sregr),] %>% group_by(stateyear) %>% filter(n() >= 800)
   slm = lm(formula = outcome_yield ~ yearagocrop + vpd + prcp + tmax + tmin + nccpi, data = sregr[complete.cases(sregr),], x=T, y=T)
-  ctest <- bootcov(clm, cregr$stateyear[complete.cases(cregr)], B=10000,fitter = ols)
   stest <- bootcov(slm, sregr$stateyear[complete.cases(sregr)], B=1000, fitter = ols)
   
   
@@ -80,52 +94,79 @@ regression_barplot = function(cnccpi) {
 }
 
 
-regression_df = function(cnccpi) {
-  sc1 <- data.frame(name = "soy_before_corn_nccpi1", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi1_mean, yearagocrop = "S", nccpi = 1,
-                   tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
-  sc2 <- data.frame(name = "soy_before_corn_nccpi2", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi2_mean, yearagocrop = "S", nccpi = 2,
-                   tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
-  sc3 <- data.frame(name = "soy_before_corn_nccpi3", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi3_mean, yearagocrop = "S", nccpi = 3,
-                   tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
-  sc4 <- data.frame(name = "soy_before_corn_nccpi4", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi4_mean, yearagocrop = "S", nccpi = 4,
-                   tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
-  sc5 <- data.frame(name = "soy_before_corn_nccpi5", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi5_mean, yearagocrop = "S", nccpi = 5,
-                   tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
-  
-  cc1 <- data.frame(name = "corn_before_corn_nccpi1", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 1,
-                    tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
-  cc2 <- data.frame(name = "corn_before_corn_nccpi2", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 2,
-                    tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
-  cc3 <- data.frame(name = "corn_before_corn_nccpi3", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 3,
-                    tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
-  cc4 <- data.frame(name = "corn_before_corn_nccpi4", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 4,
-                    tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
-  cc5 <- data.frame(name = "corn_before_corn_nccpi5", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 5,
-                    tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
-  
-  cs1 <- data.frame(name = "corn_before_soy_nccpi1", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 1,
-                    tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
-  cs2 <- data.frame(name = "corn_before_soy_nccpi2", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 2,
-                    tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
-  cs3 <- data.frame(name = "corn_before_soy_nccpi3", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 3,
-                    tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
-  cs4 <- data.frame(name = "corn_before_soy_nccpi4", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 4,
-                    tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
-  cs5 <- data.frame(name = "corn_before_soy_nccpi5", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 5,
-                    tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
-  
-  ss1 <- data.frame(name = "soy_before_soy_nccpi1",year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 1,
-                    tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
-  ss2 <- data.frame(name = "soy_before_soy_nccpi2", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 2,
-                    tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
-  ss3 <- data.frame(name = "soy_before_soy_nccpi3", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 3,
-                    tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
-  ss4 <- data.frame(name = "soy_before_soy_nccpi4", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 4,
-                    tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
-  ss5 <- data.frame(name = "soy_before_soy_nccpi5", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 5,
-                    tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
-  
-  regr = rbind(sc1, sc2, sc3, sc4, sc5, cc1, cc2, cc3, cc4, cc5, 
-               cs1, cs2, cs3, cs4, cs5, ss1, ss2, ss3, ss4, ss5)
-  return(regr)
-}
+disagg =  as.data.frame(fread("disaggregated.csv", check.names=TRUE))
+CRD = as.data.frame(fread("FIPS_CRD.csv", check.names = TRUE))
+names(CRD) = c("FIPS.formula", "CRD")
+disagg = join(disagg, CRD, by = "FIPS.formula")
+disagg = data.frame(FIPS = disagg$FIPS.formula, CRD = disagg$CRD, year = disagg$year, rotation = disagg$rotation, nccpi = disagg$nccpi_bucket, 
+                    outcome_yield = disagg$yield, prcp = disagg$prcp, tmax = disagg$tmax, tmin = disagg$tmin, vpd = disagg$vp)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+# regression_df = function(cnccpi) {
+#   sc1 <- data.frame(name = "soy_before_corn_nccpi1", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi1_mean, yearagocrop = "S", nccpi = 1,
+#                     tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
+#   sc2 <- data.frame(name = "soy_before_corn_nccpi2", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi2_mean, yearagocrop = "S", nccpi = 2,
+#                     tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
+#   sc3 <- data.frame(name = "soy_before_corn_nccpi3", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi3_mean, yearagocrop = "S", nccpi = 3,
+#                     tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
+#   sc4 <- data.frame(name = "soy_before_corn_nccpi4", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi4_mean, yearagocrop = "S", nccpi = 4,
+#                     tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
+#   sc5 <- data.frame(name = "soy_before_corn_nccpi5", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_sc_nccpi5_mean, yearagocrop = "S", nccpi = 5,
+#                     tmax = cnccpi$tmax_sc_mean, prcp = cnccpi$prcp_sc_mean, vpd = cnccpi$vp_sc_mean, tmin = cnccpi$tmin_sc_mean)
+#   
+#   cc1 <- data.frame(name = "corn_before_corn_nccpi1", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 1,
+#                     tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
+#   cc2 <- data.frame(name = "corn_before_corn_nccpi2", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 2,
+#                     tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
+#   cc3 <- data.frame(name = "corn_before_corn_nccpi3", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 3,
+#                     tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
+#   cc4 <- data.frame(name = "corn_before_corn_nccpi4", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 4,
+#                     tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
+#   cc5 <- data.frame(name = "corn_before_corn_nccpi5", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cc_nccpi1_mean, yearagocrop = "C", nccpi = 5,
+#                     tmax = cnccpi$tmax_cc_mean, prcp = cnccpi$prcp_cc_mean, vpd = cnccpi$vp_cc_mean, tmin = cnccpi$tmin_cc_mean)
+#   
+#   cs1 <- data.frame(name = "corn_before_soy_nccpi1", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 1,
+#                     tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
+#   cs2 <- data.frame(name = "corn_before_soy_nccpi2", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 2,
+#                     tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
+#   cs3 <- data.frame(name = "corn_before_soy_nccpi3", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 3,
+#                     tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
+#   cs4 <- data.frame(name = "corn_before_soy_nccpi4", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 4,
+#                     tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
+#   cs5 <- data.frame(name = "corn_before_soy_nccpi5", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_cs_nccpi1_mean, yearagocrop = "C", nccpi = 5,
+#                     tmax = cnccpi$tmax_cs_mean, prcp = cnccpi$prcp_cs_mean, vpd = cnccpi$vp_cs_mean, tmin = cnccpi$tmin_cs_mean)
+#   
+#   ss1 <- data.frame(name = "soy_before_soy_nccpi1",year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 1,
+#                     tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
+#   ss2 <- data.frame(name = "soy_before_soy_nccpi2", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 2,
+#                     tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
+#   ss3 <- data.frame(name = "soy_before_soy_nccpi3", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 3,
+#                     tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
+#   ss4 <- data.frame(name = "soy_before_soy_nccpi4", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 4,
+#                     tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
+#   ss5 <- data.frame(name = "soy_before_soy_nccpi5", year = cnccpi$year, CRD = cnccpi$CRD, outcome_yield = cnccpi$wyield_ss_nccpi1_mean, yearagocrop = "S", nccpi = 5,
+#                     tmax = cnccpi$tmax_ss_mean, prcp = cnccpi$prcp_ss_mean, vpd = cnccpi$vp_ss_mean, tmin = cnccpi$tmin_ss_mean)
+#   
+#   regr = rbind(sc1, sc2, sc3, sc4, sc5, cc1, cc2, cc3, cc4, cc5, 
+#                cs1, cs2, cs3, cs4, cs5, ss1, ss2, ss3, ss4, ss5)
+#   return(regr)
+# }
+
+
