@@ -369,8 +369,8 @@ wald = function(data, vars) {
     data[which(data[,v]  >= quantile(data[,v] ,probs=c(.75), na.rm=T)), paste0(v, 'qu')] <- 4
     data[,paste0(v, 'qu')] <- as.factor(data[,paste0(v, 'qu')])
     
-    f0 = formula(paste0("outcome_yield ~ yearagocrop + prcp + tmax + tmin + vp + ", v, "qu"))
-    f1 = formula(paste0("outcome_yield ~ yearagocrop + prcp + tmax + tmin + vp + ", v, "qu", "*yearagocrop"))
+    f0 = formula(paste0("outcome_yield ~ yearagocrop + prcp + tmax + year + tmin + vp + ", v, "qu"))
+    f1 = formula(paste0("outcome_yield ~ yearagocrop + prcp + tmax + year + tmin + vp + ", v, "qu", "*yearagocrop"))
     test0 = ols(formula = f0, data = data, x=TRUE, y=TRUE)
     test1 = ols(formula = f1, data = data, x=TRUE, y=TRUE)
     w = waldtest(test0, test1)
